@@ -6,7 +6,12 @@ import os
 import string
 from pymongo import MongoClient, DESCENDING, ASCENDING
 
+save_directory = 'courses/' 
+
 def save_courses():
+	if not os.path.isdir(save_directory):
+		os.makedirs(save_directory) 
+
 	f = open('view.json','r')
 
 	json_obj = json.load(f)
@@ -32,23 +37,28 @@ def save_courses():
 		if not l.startswith('/ptools'):
 			continue
 		course_urls.append(l)
-
-	for l in course_urls:
-		print (main_url + l)
-		course_info = requests.get(main_url + l, allow_redirects=True).content
-		file_loc = '/home/courses/' + l[-4:] + '.html'
-		print file_loc
+	
+	print 'Downloading {0} course information'.format(len(course_urls))
+	for i, l in enumerate(course_urls):
+		course_url = main_url + l
+		file_loc = save_directory + l[-4:] + '.html'
+		print '\r {0} course from {1} and saving to {2}'.format(
+			i, course_url, file_loc), 
+		course_info = requests.get(course_url, allow_redirects=True).content
 		course_file = open(file_loc, 'w+')
 		course_file.write(course_info)
 		course_file.close()
 
 def parse_files():
+	if not os.path.isdir(save_directory):
+		save_courses()
+
 	client = MongoClient()
 	db = client['test']
 	course_coll = db['courses']
 
-	for f in os.listdir('/home/courses'):
-		course_file = open('/home/courses/' + f, 'r')
+	for f in os.listdir(save_directory):
+		course_file = open(save_directory + f, 'r')
 		soup = BeautifulSoup(course_file.read(), 'html.parser')
 		table_entries =  [x.contents for x in soup.find_all('td')]
 		proper_string = lambda x : True if x != '\n' and x != ' ' and isinstance(x, basestring) else False
@@ -107,7 +117,8 @@ def parse_files():
 
 
 
-if '__main__' == __name__:
+if '__main__' == __name__:	
+	#save_courses()
 	parse_files()
 
 
