@@ -7,23 +7,45 @@ import string
 from pymongo import MongoClient, DESCENDING, ASCENDING
 
 save_directory = 'courses/' 
+main_url = 'http://internet2.trincoll.edu'
+search_url = 'http://internet2.trincoll.edu/ptools/CourseSearch.aspx'
+
+def get_course_terms():
+	r = requests.get(search_url)
+	soup = BeautifulSoup(r.content, 'html.parser')
+	terms = soup.find('select', {'id': 'ddlTerm' })
+	
+	terms_dict = {}
+	for t in terms.find_all('option'):
+		term_id = t.get('value')
+		term_name =  t.getText()
+		terms_dict[term_name] = term_id
+	
+	return terms_dict
 
 def save_courses():
 	if not os.path.isdir(save_directory):
 		os.makedirs(save_directory) 
 
-	f = open('view.json','r')
+	f = open('view.json', 'r')
 
 	json_obj = json.load(f)
 
-	main_url = 'http://internet2.trincoll.edu'
-	search_url = 'http://internet2.trincoll.edu/ptools/CourseSearch.aspx'
+	terms_dict = get_course_terms()
+	
+	latest_term_id = max(terms_dict.items(), key=lambda k : k[1])[1]
 
-	req_data = dict(ddlTerm='1181', ddlLevel=0,
-					ddlCourseCareer='URGD', daysGroup='optInclude',
-					ddlSession='REG', butSubmit='Search',
-					__VIEWSTATE=json_obj['__VIEWSTATE'], 
-					__VIEWSTATEGENERATOR=json_obj['__VIEWSTATEGENERATOR'])
+	print latest_term_id 
+	return
+
+	req_data = dict(ddlTerm=str(latest_term_id), 
+			ddlLevel=0,
+			ddlCourseCareer='URGD', 
+			daysGroup='optInclude',
+			ddlSession='REG', 
+			butSubmit='Search',
+			__VIEWSTATE=json_obj['__VIEWSTATE'], 
+			__VIEWSTATEGENERATOR=json_obj['__VIEWSTATEGENERATOR'])
 
 	r = requests.post(search_url, data=req_data, allow_redirects=True)
 
@@ -118,7 +140,8 @@ def parse_files():
 
 
 if '__main__' == __name__:	
-	#save_courses()
-	parse_files()
+	#get_course_terms()
+	save_courses()
+	# parse_files()
 
 
