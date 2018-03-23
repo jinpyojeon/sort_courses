@@ -1,4 +1,4 @@
-Regex the course number for HTML
-Parse the html into table
-Make table into publishable HTML using static site generator or some framework 
 
+Change MongoDB entries to tables
+Allow easier navigation of the courses
+Refer to the original courses schedule
